@@ -2,6 +2,7 @@ package com.study.locationtest;
 
 import android.app.Activity;
 import android.content.Context;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -17,54 +18,44 @@ public class MainActivity extends Activity {
     private TextView positionTextView;
     private LocationManager locationManager;
     private String provider;
-
-    LocationListener locationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-            showLocation(location);
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }
-    };
+    private LocationListener locationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        positionTextView = (TextView) findViewById(R.id.position_text_view);
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        criteria.setAltitudeRequired(true);
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 
-        positionTextView.setText("fuck");
+            Location location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria,true));
 
-        List<String> providerList = locationManager.getProviders(true);
-        if(providerList.contains(LocationManager.GPS_PROVIDER)) {
-            Log.d("TEST", "GPS_PROVIDER");
-            provider = LocationManager.GPS_PROVIDER;
-        } else if(providerList.contains(LocationManager.NETWORK_PROVIDER)) {
-            Log.d("TEST", "NETWORK_PROVIDER");
-            provider = LocationManager.NETWORK_PROVIDER;
+            if (location != null) {
+                showLocation(location);
+            }
         } else {
-            Toast.makeText(this, "No location provider to use", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        while (location == null) {
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 500, 1, locationListener);
+            LocationListener locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                }
+                @Override
+                public void onStatusChanged(String s, int i, Bundle bundle) {
+                }
+                @Override
+                public void onProviderEnabled(String s) {
+                }
+                @Override
+                public void onProviderDisabled(String s) {
+                }
+            };
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 0, locationListener);
+            Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            if (location != null) {
+                showLocation(location);
+            }
         }
     }
 
@@ -76,6 +67,7 @@ public class MainActivity extends Activity {
     }
 
     private void showLocation(Location location) {
+        Toast.makeText(this, "GPS", Toast.LENGTH_LONG).show();
         String currentPosition = "latitude is " + location.getLatitude() + "\n"
                 + "longitude is " + location.getLongitude();
         positionTextView.setText(currentPosition);
